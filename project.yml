@@ -1,0 +1,31 @@
+name: PureClean
+options:
+  bundleIdPrefix: com.awsnextgenit
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    GENERATE_INFOPLIST_FILE: true
+    INFOPLIST_KEY_LSUIElement: true
+    INFOPLIST_KEY_NSHumanReadableCopyright: "© 2026 AWS NextGen IT LTD"
+    INFOPLIST_KEY_NSPrincipalClass: NSApplication
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+    ENABLE_HARDENED_RUNTIME: false
+    ENABLE_APP_SANDBOX: false
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 1.0.0
+    SWIFT_STRICT_CONCURRENCY: minimal
+targets:
+  PureClean:
+    type: application
+    platform: macOS
+    sources:
+      - PureClean
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.awsnextgenit.PureClean
+        INFOPLIST_KEY_CFBundleDisplayName: PureClean
