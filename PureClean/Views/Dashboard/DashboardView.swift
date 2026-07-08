@@ -21,16 +21,13 @@ struct DashboardView: View {
             }
             .padding(14)
         }
-        .confirmationDialog(
-            "Run Smart Clean?",
-            isPresented: $showCleanConfirm, titleVisibility: .visible
+        .confirmOverlay(
+            isPresented: $showCleanConfirm,
+            title: "Run Smart Clean?",
+            message: "Only caches, logs and temporary files are removed. Items go to the Trash so you can restore them. Personal files are never touched.",
+            confirmTitle: "Clean \(app.cleaner.recoverableSelected.bytesFormatted)"
         ) {
-            Button("Clean \(app.cleaner.recoverableSelected.bytesFormatted)", role: .destructive) {
-                Task { cleanResult = await app.cleaner.cleanSelected() }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Only caches, logs and temporary files are removed. Items go to the Trash so you can restore them. Personal files are never touched.")
+            Task { cleanResult = await app.cleaner.cleanSelected() }
         }
     }
 

@@ -45,14 +45,21 @@ struct UninstallerView: View {
         }
         .navigationTitle("App Uninstaller")
         .task { await app.uninstaller.scan() }
-        .sheet(item: $reviewing) { appToRemove in
-            UninstallReviewSheet(app: appToRemove) { confirmed in
-                if confirmed {
-                    result = self.app.uninstaller.uninstall(appToRemove)
+        .overlay {
+            if let appToRemove = reviewing {
+                ZStack {
+                    Rectangle().fill(.black.opacity(0.45))
+                        .onTapGesture { reviewing = nil }
+                    UninstallReviewSheet(app: appToRemove) { confirmed in
+                        if confirmed { result = self.app.uninstaller.uninstall(appToRemove) }
+                        reviewing = nil
+                    }
+                    .transition(.scale(scale: 0.92).combined(with: .opacity))
                 }
-                reviewing = nil
+                .zIndex(10)
             }
         }
+        .animation(.spring(response: 0.28, dampingFraction: 0.8), value: reviewing)
     }
 }
 
@@ -94,6 +101,10 @@ private struct UninstallReviewSheet: View {
             }
         }
         .padding(16)
-        .frame(width: 360)
+        .frame(width: 330)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(0.08)))
+        .shadow(radius: 24, y: 10)
+        .padding(20)
     }
 }

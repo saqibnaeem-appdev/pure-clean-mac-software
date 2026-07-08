@@ -66,6 +66,7 @@ struct StatCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle()
+        .tilt3D()
     }
 }
 
@@ -132,4 +133,104 @@ struct ResultBanner: View {
         .padding(10)
         .background(.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
     }
+}
+
+// MARK: - In-popover confirmation (native dialogs steal focus from
+// MenuBarExtra windows and dismiss the popover, so we draw our own).
+
+struct ConfirmOverlayModifier: ViewModifier {
+    @Binding var isPresented: Bool
+    let title: String
+    let message: String
+    let confirmTitle: String
+    var tint: Color = .red
+    let onConfirm: () -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if isPresented {
+                    ZStack {
+                        Rectangle()
+                            .fill(.black.opacity(0.45))
+                            .onTapGesture { isPresented = false }
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(title)
+                                .font(.system(size: 14, weight: .bold))
+                            Text(message)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            VStack(spacing: 6) {
+                                Button {
+                                    isPresented = false
+                                    onConfirm()
+                                } label: {
+                                    Text(confirmTitle)
+                                        .fontWeight(.semibold)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 8)
+                                        .background(tint.gradient, in: RoundedRectangle(cornerRadius: 9))
+                                        .foregroundStyle(.white)
+                                }
+                                .buttonStyle(.plain)
+                                Button {
+                                    isPresented = false
+                                } label: {
+                                    Text("Cancel")
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 8)
+                                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 9))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(.top, 2)
+                        }
+                        .padding(16)
+                        .frame(width: 290)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(0.08)))
+                        .shadow(radius: 24, y: 10)
+                        .transition(.scale(scale: 0.92).combined(with: .opacity))
+                    }
+                    .zIndex(10)
+                }
+            }
+            .animation(.spring(response: 0.28, dampingFraction: 0.8), value: isPresented)
+    }
+}
+
+extension View {
+    func confirmOverlay(
+        isPresented: Binding<Bool>, title: String, message: String,
+        confirmTitle: String, tint: Color = .red, onConfirm: @escaping () -> Void
+    ) -> some View {
+        modifier(ConfirmOverlayModifier(
+            isPresented: isPresented, title: title, message: message,
+            confirmTitle: confirmTitle, tint: tint, onConfirm: onConfirm))
+    }
+}
+
+// MARK: - 3D hover tilt for cards
+
+struct Tilt3DModifier: ViewModifier {
+    @State private var hovering = false
+
+    func body(content: Content) -> some View {
+        content
+            .rotation3DEffect(
+                .degrees(hovering ? 5 : 0),
+                axis: (x: 1, y: -0.5, z: 0),
+                perspective: 0.6)
+            .scaleEffect(hovering ? 1.015 : 1)
+            .shadow(color: .black.opacity(hovering ? 0.28 : 0.07),
+                    radius: hovering ? 14 : 4, y: hovering ? 9 : 2)
+            .animation(.spring(response: 0.3, dampingFraction: 0.72), value: hovering)
+            .onHover { hovering = $0 }
+    }
+}
+
+extension View {
+    /// Subtle 3D lift when the pointer hovers a card.
+    func tilt3D() -> some View { modifier(Tilt3DModifier()) }
 }

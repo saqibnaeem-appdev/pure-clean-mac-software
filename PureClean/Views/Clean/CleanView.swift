@@ -24,16 +24,13 @@ struct CleanView: View {
             footer
         }
         .task { await app.cleaner.scan() }
-        .confirmationDialog(
-            "Clean selected categories?",
-            isPresented: $showConfirm, titleVisibility: .visible
+        .confirmOverlay(
+            isPresented: $showConfirm,
+            title: "Clean selected categories?",
+            message: "Items are moved to the Trash where possible so you can restore them. Personal files are never touched.",
+            confirmTitle: "Recover \(app.cleaner.recoverableSelected.bytesFormatted)"
         ) {
-            Button("Recover \(app.cleaner.recoverableSelected.bytesFormatted)", role: .destructive) {
-                Task { result = await app.cleaner.cleanSelected() }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Items are moved to the Trash where possible so you can restore them. Personal files are never touched.")
+            Task { result = await app.cleaner.cleanSelected() }
         }
     }
 

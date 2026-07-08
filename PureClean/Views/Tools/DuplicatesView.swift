@@ -73,14 +73,13 @@ struct DuplicatesView: View {
             }
         }
         .navigationTitle("Duplicates")
-        .confirmationDialog(
-            "Move selected copies to Trash?",
-            isPresented: $showConfirm, titleVisibility: .visible
+        .confirmOverlay(
+            isPresented: $showConfirm,
+            title: "Move selected copies to Trash?",
+            message: "At least one copy of every file is always kept, and removed copies stay restorable in the Trash.",
+            confirmTitle: "Move to Trash"
         ) {
-            Button("Move to Trash", role: .destructive) { result = finder.trashSelected() }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("At least one copy of every file is always kept, and removed copies stay restorable in the Trash.")
+            result = finder.trashSelected()
         }
     }
 

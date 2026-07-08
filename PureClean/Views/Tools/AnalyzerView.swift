@@ -4,6 +4,7 @@ import Charts
 /// Colourful, read-only breakdown of which folders use your disk.
 struct AnalyzerView: View {
     @Environment(AppState.self) private var app
+    @State private var spin = false
 
     private static let palette: [Color] = [
         .blue, .purple, .pink, .orange, .yellow, .green, .teal, .indigo, .red,
@@ -35,7 +36,7 @@ struct AnalyzerView: View {
                         .cornerRadius(3)
                         .foregroundStyle(Self.palette[usage.colorIndex % Self.palette.count])
                     }
-                    .frame(height: 170)
+                    .frame(height: 180)
                     .overlay {
                         VStack(spacing: 0) {
                             Text(total.bytesFormatted)
@@ -44,6 +45,15 @@ struct AnalyzerView: View {
                                 .font(.system(size: 9))
                                 .foregroundStyle(.secondary)
                         }
+                    }
+                    // 3D tilt + entrance spin for the donut.
+                    .rotation3DEffect(.degrees(spin ? 0 : -18),
+                                      axis: (x: 1, y: 0, z: 0), perspective: 0.5)
+                    .rotationEffect(.degrees(spin ? 0 : -12))
+                    .scaleEffect(spin ? 1 : 0.9)
+                    .shadow(color: .black.opacity(0.25), radius: 16, y: 12)
+                    .onAppear {
+                        withAnimation(.spring(response: 0.8, dampingFraction: 0.65)) { spin = true }
                     }
 
                     VStack(spacing: 6) {

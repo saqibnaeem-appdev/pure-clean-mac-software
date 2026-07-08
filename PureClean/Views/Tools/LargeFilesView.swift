@@ -88,14 +88,13 @@ struct LargeFilesView: View {
             }
         }
         .navigationTitle("Large Files")
-        .confirmationDialog(
-            "Move \(finder.selection.count) files to Trash?",
-            isPresented: $showConfirm, titleVisibility: .visible
+        .confirmOverlay(
+            isPresented: $showConfirm,
+            title: "Move \(finder.selection.count) files to Trash?",
+            message: "Files go to the Trash — you can restore them anytime before emptying it.",
+            confirmTitle: "Move to Trash"
         ) {
-            Button("Move to Trash", role: .destructive) { result = finder.trashSelected() }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Files go to the Trash — you can restore them anytime before emptying it.")
+            result = finder.trashSelected()
         }
     }
 }
