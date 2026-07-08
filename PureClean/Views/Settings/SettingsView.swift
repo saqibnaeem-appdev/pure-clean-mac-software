@@ -116,6 +116,12 @@ struct SettingsView: View {
                 .font(.system(size: 9.5))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+            Text("Created by AWS NextGen IT")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(
+                    LinearGradient(colors: [.blue, .purple],
+                                   startPoint: .leading, endPoint: .trailing))
+                .padding(.top, 2)
         }
         .frame(maxWidth: .infinity)
         .cardStyle()
