@@ -9,26 +9,27 @@ struct DuplicatesView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(finder.scannedFolder?.lastPathComponent ?? "No folder selected")
-                        .font(.system(size: 12, weight: .semibold))
-                    Text("Duplicates are verified byte-for-byte (SHA-256) — no false matches.")
-                        .font(.system(size: 9.5))
-                        .foregroundStyle(.secondary)
+            VStack(spacing: Theme.gridSpacing) {
+                PageHeader("Duplicates",
+                           subtitle: "Byte-for-byte verified with SHA-256 — false matches are impossible.") {
+                    Button {
+                        pickFolder()
+                    } label: {
+                        if finder.isScanning {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Label(finder.scannedFolder == nil ? "Choose Folder…" : "Scan Another Folder…",
+                                  systemImage: "folder")
+                        }
+                    }
+                    .controlSize(.large)
+                    .disabled(finder.isScanning)
                 }
-                Spacer()
-                Button {
-                    pickFolder()
-                } label: {
-                    if finder.isScanning { ProgressView().controlSize(.small) }
-                    else { Label("Choose Folder…", systemImage: "folder") }
+                if let result {
+                    ResultBanner(result: result)
                 }
-                .disabled(finder.isScanning)
             }
-            .padding(12)
-
-            Divider()
+            .padding(Theme.pagePadding)
 
             if finder.groups.isEmpty {
                 ContentUnavailableView(
@@ -43,7 +44,7 @@ struct DuplicatesView: View {
                     ForEach(finder.groups) { group in
                         Section {
                             ForEach(group.files, id: \.self) { url in
-                                DuplicateRow(url: url, size: group.fileSize,
+                                DuplicateRow(url: url,
                                              isSelected: finder.selection.contains(url)) { on in
                                     if on { finder.selection.insert(url) }
                                     else { finder.selection.remove(url) }
@@ -51,35 +52,43 @@ struct DuplicatesView: View {
                             }
                         } header: {
                             Text("\(group.files.count) copies · \(group.fileSize.bytesFormatted) each · save \(group.recoverable.bytesFormatted)")
-                                .font(.system(size: 9.5, weight: .semibold))
+                                .font(.system(size: 10, weight: .semibold))
                         }
                     }
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
 
-                Divider()
+                Divider().opacity(0.5)
                 HStack {
-                    if let result {
-                        Text("Removed \(result.removedItems) copies (\(result.freedBytes.bytesFormatted))")
-                            .font(.system(size: 10)).foregroundStyle(.green)
-                    }
+                    Text("At least one copy of every file is always kept.")
+                        .font(Theme.caption())
+                        .foregroundStyle(.secondary)
                     Spacer()
-                    Button(role: .destructive) { showConfirm = true } label: {
-                        Label("Remove \(finder.recoverableSelected.bytesFormatted)", systemImage: "trash")
+                    PrimaryGradientButton(
+                        title: "Remove \(finder.recoverableSelected.bytesFormatted)",
+                        icon: "trash", fullWidth: false
+                    ) {
+                        showConfirm = true
                     }
                     .disabled(finder.selection.isEmpty)
+                    .opacity(finder.selection.isEmpty ? 0.5 : 1)
                 }
-                .padding(10)
+                .padding(.horizontal, Theme.pagePadding)
+                .padding(.vertical, 12)
+                .background(.bar)
             }
         }
-        .navigationTitle("Duplicates")
-        .confirmOverlay(
-            isPresented: $showConfirm,
-            title: "Move selected copies to Trash?",
-            message: "At least one copy of every file is always kept, and removed copies stay restorable in the Trash.",
-            confirmTitle: "Move to Trash"
+        .confirmationDialog(
+            "Move selected copies to Trash?",
+            isPresented: $showConfirm, titleVisibility: .visible
         ) {
-            result = finder.trashSelected()
+            Button("Move to Trash", role: .destructive) {
+                result = finder.trashSelected()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("At least one copy of every file is always kept, and removed copies stay restorable in the Trash.")
         }
     }
 
@@ -99,34 +108,36 @@ struct DuplicatesView: View {
 
 private struct DuplicateRow: View {
     let url: URL
-    let size: Int64
     let isSelected: Bool
     let toggle: (Bool) -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             Toggle("", isOn: Binding(get: { isSelected }, set: toggle))
+                .toggleStyle(.checkbox)
                 .labelsHidden()
             ThumbnailView(url: url)
             VStack(alignment: .leading, spacing: 1) {
                 Text(url.lastPathComponent)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 12, weight: .medium))
                     .lineLimit(1)
-                Text(url.deletingLastPathComponent().path
-                    .replacingOccurrences(of: NSHomeDirectory(), with: "~"))
-                    .font(.system(size: 9))
+                Text(url.deletingLastPathComponent().abbreviatedPath)
+                    .font(.system(size: 10))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .truncationMode(.middle)
             }
             Spacer()
             Button {
                 NSWorkspace.shared.activateFileViewerSelecting([url])
             } label: {
                 Image(systemName: "magnifyingglass.circle")
+                    .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
             .help("Reveal in Finder")
         }
+        .padding(.vertical, 2)
     }
 }
 
@@ -146,8 +157,8 @@ private struct ThumbnailView: View {
                     .resizable()
             }
         }
-        .frame(width: 28, height: 28)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .frame(width: 30, height: 30)
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
         .task {
             let path = url
             image = await Task.detached(priority: .utility) { () -> NSImage? in

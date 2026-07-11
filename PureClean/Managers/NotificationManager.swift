@@ -26,10 +26,10 @@ final class NotificationManager {
     }
 
     func checkThresholds(snapshot: SystemSnapshot, cacheSize: Int64) {
-        if storageAlerts, snapshot.diskTotal > 0,
-           Double(snapshot.diskFree) / Double(snapshot.diskTotal) < 0.10 {
+        if storageAlerts, snapshot.disk.total > 0,
+           Double(snapshot.disk.available) / Double(snapshot.disk.total) < 0.10 {
             send(id: "storage", title: "Storage running low",
-                 body: "Only \(snapshot.diskFree.bytesFormatted) free. Run Smart Clean to recover space safely.")
+                 body: "Only \(snapshot.disk.available.bytesFormatted) free. Run Smart Scan to recover space safely.")
         }
         if memoryAlerts, snapshot.memory.usedFraction > 0.90 {
             send(id: "memory", title: "Memory pressure is high",

@@ -1,165 +1,211 @@
 import SwiftUI
 
+/// Landing page: system health at a glance + the Smart Scan hero action.
 struct DashboardView: View {
     @Environment(AppState.self) private var app
-    @State private var showCleanConfirm = false
-    @State private var cleanResult: CleanResult?
 
-    private var vm: DashboardViewModel {
-        DashboardViewModel(snapshot: app.stats.snapshot, cleaner: app.cleaner)
-    }
+    private var snap: SystemSnapshot { app.monitor.snapshot }
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 12) {
-                header
-                smartCleanCard
-                if let cleanResult { ResultBanner(result: cleanResult) }
-                ringsRow
-                statsGrid
-                freeMemoryCard
+            VStack(spacing: Theme.gridSpacing) {
+                PageHeader("Dashboard", subtitle: greetingSubtitle) {
+                    HStack(spacing: 8) {
+                        if snap.smartStatus == "Verified" {
+                            Badge(text: "Disk Healthy", color: .green)
+                        }
+                        Badge(text: "Memory \(snap.memory.pressure.label)",
+                              color: snap.memory.pressure.color)
+                    }
+                }
+
+                heroCard
+
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Theme.gridSpacing),
+                                         count: 3),
+                          spacing: Theme.gridSpacing) {
+                    ringCard(
+                        title: "Storage", icon: "internaldrive.fill", tint: .blue,
+                        fraction: snap.disk.usedFraction,
+                        value: snap.disk.available.bytesFormatted,
+                        label: "available",
+                        footer: snap.disk.purgeable > 0
+                            ? "\(snap.disk.purgeable.bytesFormatted) purgeable"
+                            : "of \(snap.disk.total.bytesFormatted)",
+                        route: .storage)
+                    ringCard(
+                        title: "Memory", icon: "memorychip.fill", tint: .purple,
+                        fraction: snap.memory.usedFraction,
+                        value: snap.memory.used.bytesFormatted,
+                        label: "in use",
+                        footer: "of \(snap.memory.total.bytesFormatted)",
+                        route: .performance)
+                    ringCard(
+                        title: "CPU", icon: "cpu.fill", tint: .cyan,
+                        fraction: snap.cpu.usage,
+                        value: snap.cpu.usage.percentFormatted,
+                        label: "load",
+                        footer: String(format: "load avg %.2f", snap.cpu.loadAverage),
+                        route: .performance)
+                }
+
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Theme.gridSpacing),
+                                         count: 3),
+                          spacing: Theme.gridSpacing) {
+                    navTile(route: .trash, icon: "trash.fill", tint: .red, title: "Trash",
+                            value: app.trash.needsFullDiskAccess
+                                ? "—" : app.trash.totalSize.bytesFormatted,
+                            detail: app.trash.needsFullDiskAccess
+                                ? "needs Full Disk Access"
+                                : "\(app.trash.itemCount) item\(app.trash.itemCount == 1 ? "" : "s")")
+                    if snap.battery.hasBattery {
+                        navTile(route: .performance,
+                                icon: snap.battery.isCharging ? "battery.100percent.bolt" : "battery.75percent",
+                                tint: .green, title: "Battery",
+                                value: "\(snap.battery.percentage)%",
+                                detail: snap.battery.healthPercent > 0
+                                    ? "\(snap.battery.healthPercent)% health · \(snap.battery.cycleCount) cycles"
+                                    : snap.battery.powerSource)
+                    } else {
+                        navTile(route: .performance, icon: "powerplug.fill", tint: .green,
+                                title: "Power", value: "Desktop Mac", detail: "no battery")
+                    }
+                    navTile(route: .performance, icon: "network", tint: .orange, title: "Network",
+                            value: "↓ \(snap.network.inPerSec.rateFormatted)",
+                            detail: "↑ \(snap.network.outPerSec.rateFormatted)")
+                }
             }
-            .padding(14)
-        }
-        .confirmOverlay(
-            isPresented: $showCleanConfirm,
-            title: "Run Smart Clean?",
-            message: "Only caches, logs and temporary files are removed. Items go to the Trash so you can restore them. Personal files are never touched.",
-            confirmTitle: "Clean \(app.cleaner.recoverableSelected.bytesFormatted)"
-        ) {
-            Task { cleanResult = await app.cleaner.cleanSelected() }
+            .padding(Theme.pagePadding)
         }
     }
 
-    private var header: some View {
-        HStack {
-            HStack(spacing: 7) {
-                Image(systemName: "sparkles")
+    private var greetingSubtitle: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        let greeting = switch hour {
+        case 5..<12: "Good morning"
+        case 12..<17: "Good afternoon"
+        case 17..<22: "Good evening"
+        default: "Working late"
+        }
+        return "\(greeting) — your Mac is running \(snap.uptime.uptimeFormatted) since restart."
+    }
+
+    // MARK: - Hero
+
+    private var heroCard: some View {
+        HStack(spacing: 18) {
+            PulsingSparkle()
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Smart Scan")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(
-                        LinearGradient(colors: [.blue, .purple],
-                                       startPoint: .top, endPoint: .bottom))
-                Text("PureClean")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                Text(heroSubtitle)
+                    .font(Theme.body())
+                    .foregroundStyle(.secondary)
             }
             Spacer()
-            Text(vm.snapshot.smartStatus == "Verified" ? "Disk: Healthy" : "Disk: \(vm.snapshot.smartStatus)")
-                .font(.system(size: 10, weight: .medium))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(.green.opacity(0.15), in: Capsule())
-                .foregroundStyle(.green)
-        }
-    }
-
-    private var smartCleanCard: some View {
-        VStack(spacing: 10) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Smart Clean")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text(vm.recoverableText)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                if app.cleaner.isScanning { ProgressView().controlSize(.small) }
-            }
-            if app.cleaner.isCleaning {
-                ProgressView(value: app.cleaner.progress)
-                    .progressViewStyle(.linear)
-            }
-            PrimaryButton(
-                title: app.cleaner.isCleaning ? "Cleaning…" : "Smart Clean",
+            PrimaryGradientButton(
+                title: app.scanner.hasResults ? "View Results" : "Scan Now",
                 icon: "sparkles",
-                isBusy: app.cleaner.isCleaning
+                isBusy: app.scanner.isScanning,
+                fullWidth: false
             ) {
-                cleanResult = nil
-                showCleanConfirm = true
+                if app.scanner.hasResults || app.scanner.isScanning {
+                    withAnimation { app.route = .smartScan }
+                } else {
+                    app.runSmartScan()
+                }
             }
         }
-        .cardStyle()
+        .glassCard()
+        .hoverLift()
     }
 
-    private var ringsRow: some View {
-        HStack(spacing: 12) {
-            VStack(spacing: 6) {
-                ProgressRing(
-                    fraction: vm.storageUsedFraction,
-                    label: vm.snapshot.diskFree.bytesFormatted,
-                    sublabel: "free of \(vm.snapshot.diskTotal.bytesFormatted)",
-                    tint: .blue)
-                Text("Storage").font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity)
-            VStack(spacing: 6) {
-                ProgressRing(
-                    fraction: vm.snapshot.memory.usedFraction,
-                    label: vm.snapshot.memory.used.bytesFormatted,
-                    sublabel: "of \(vm.snapshot.memory.total.bytesFormatted)",
-                    tint: .purple)
-                Text("Memory").font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity)
-            VStack(spacing: 6) {
-                ProgressRing(
-                    fraction: vm.snapshot.cpuUsage,
-                    label: vm.snapshot.cpuUsage.percentFormatted,
-                    sublabel: "CPU load",
-                    tint: .cyan)
-                Text("CPU").font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity)
+    private var heroSubtitle: String {
+        if app.scanner.isScanning {
+            return "Scanning… \(app.scanner.progress.filesScanned) files inspected so far."
         }
-        .cardStyle()
-    }
-
-    private var statsGrid: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-            StatCard(icon: "battery.75percent", title: "Battery",
-                     value: vm.batteryText, detail: vm.batteryDetail, tint: .green)
-            StatCard(icon: "internaldrive", title: "Cache",
-                     value: vm.cacheSize.bytesFormatted, detail: "app + browser", tint: .orange)
-            StatCard(icon: "trash", title: "Trash",
-                     value: vm.trashSize.bytesFormatted, detail: "restorable", tint: .red)
-            StatCard(icon: "clock.arrow.circlepath", title: "Temp Files",
-                     value: vm.tempSize.bytesFormatted, detail: "user temp dir", tint: .indigo)
+        if app.scanner.hasResults, app.scanner.recoverableTotal > 0 {
+            return "You can safely recover \(app.scanner.recoverableTotal.bytesFormatted)."
         }
+        return "Find caches, logs, leftovers and junk — nothing personal is ever touched."
     }
 
-    private var freeMemoryCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Free Memory")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text(app.memory.explanation)
-                        .font(.system(size: 10))
+    // MARK: - Cards
+
+    private func ringCard(title: String, icon: String, tint: Color,
+                          fraction: Double, value: String, label: String,
+                          footer: String, route: Route) -> some View {
+        Button {
+            withAnimation { app.route = route }
+        } label: {
+            VStack(spacing: 12) {
+                HStack(spacing: 7) {
+                    IconBadge(systemName: icon, tint: tint, size: 24)
+                    Text(title)
+                        .font(.system(size: 11.5, weight: .medium))
                         .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
                 }
-            }
-            if let freed = app.memory.lastFreed {
-                Text("Freed \(freed.bytesFormatted) ✓")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.green)
-            }
-            Button {
-                Task { await app.memory.freeMemory() }
-            } label: {
-                HStack(spacing: 6) {
-                    if app.memory.isFreeing {
-                        ProgressView().controlSize(.small)
-                    } else {
-                        Image(systemName: "memorychip")
+                MetricRing(fraction: fraction, tint: tint, size: 104) {
+                    VStack(spacing: 0) {
+                        Text(value)
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                            .animatedNumber(value)
+                        Text(label)
+                            .font(.system(size: 9.5))
+                            .foregroundStyle(.secondary)
                     }
-                    Text("Free Memory").fontWeight(.medium)
+                    .padding(.horizontal, 14)
                 }
-                .frame(maxWidth: .infinity)
+                Text(footer)
+                    .font(Theme.footnote())
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
             }
-            .controlSize(.large)
-            .disabled(app.memory.isFreeing)
+            .frame(maxWidth: .infinity)
+            .glassCard(padding: 16)
+            .contentShape(RoundedRectangle(cornerRadius: Theme.corner, style: .continuous))
         }
-        .cardStyle()
+        .buttonStyle(PressableButtonStyle())
+        .hoverLift()
+    }
+
+    private func navTile(route: Route, icon: String, tint: Color,
+                         title: String, value: String, detail: String) -> some View {
+        Button {
+            withAnimation { app.route = route }
+        } label: {
+            StatTile(icon: icon, tint: tint, title: title, value: value, detail: detail)
+        }
+        .buttonStyle(PressableButtonStyle())
+    }
+}
+
+/// The dashboard hero's softly pulsing brand mark.
+private struct PulsingSparkle: View {
+    @State private var pulse = false
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(Theme.brandGradient)
+                .frame(width: 54, height: 54)
+                .shadow(color: .purple.opacity(0.45), radius: pulse ? 16 : 8, y: 4)
+            Circle()
+                .stroke(.blue.opacity(0.35), lineWidth: 1.5)
+                .frame(width: 54, height: 54)
+                .scaleEffect(pulse ? 1.35 : 1)
+                .opacity(pulse ? 0 : 0.8)
+            Image(systemName: "sparkles")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(.white)
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: false)) {
+                pulse = true
+            }
+        }
     }
 }

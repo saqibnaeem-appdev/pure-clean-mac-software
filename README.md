@@ -1,65 +1,91 @@
-# PureClean — Safe Mac Cleaner
+# PureClean
 
-A modern macOS **menu bar** cleaning app (SwiftUI, macOS 14+) focused exclusively on **safe cleaning**. It can never delete personal files — that guarantee is enforced in code, not just in the UI.
+Safe cleaning and live system monitoring for macOS — built by **AWS NextGen IT**.
 
-## Open & Run
-
-```bash
-open PureClean.xcodeproj
-```
-
-Press **⌘R** in Xcode. A ✨ sparkles icon appears in your menu bar — click it to open the app.
-
-> The project file is generated with [XcodeGen](https://github.com/yonaskolb/XcodeGen) from `project.yml`. If you add new Swift files outside Xcode, re-run `xcodegen generate`.
+A native SwiftUI app (macOS 14+) with a full dashboard window, a menu bar
+presence, and a hard safety guarantee: **personal files are never touched,
+and removals go to the Trash whenever possible.**
 
 ## Features
 
-| Tab | What it does |
-| --- | --- |
-| **Home** | Storage / Memory / CPU rings, battery health & cycles, disk SMART status, cache/trash/temp sizes, **Smart Clean** ("You can safely recover X GB") and **Free Memory** |
-| **Clean** | Category-by-category cleaning with live sizes and toggles: user & app cache, browser caches (Safari/Chrome/Edge/Firefox), Xcode DerivedData & Archives, logs, crash reports, temp files, QuickLook thumbnails, Trash, old installers · plus a DNS-flush maintenance action |
-| **Tools** | Large Files finder (500 MB / 1 GB / 5 GB, review before trash) · Duplicate finder (SHA-256 verified, always keeps one copy) · App Uninstaller (app + caches + prefs + logs + support files, full review sheet) · Startup items (user LaunchAgents toggle + System Settings deep-link) · Storage Analyzer (donut chart of folder sizes) |
-| **Monitor** | Live (1 s) CPU & memory charts, network in/out, disk free, SMART status |
-| **Settings** | Scheduled cleaning (daily/weekly/monthly), notification thresholds (storage < 10 %, RAM > 90 %, cache > 5 GB), Full Disk Access explainer, launch at login |
+### Smart Scan
+Animated live scanner (file counter, byte counter, current path, ETA) across:
+system junk, browser caches, logs, crash reports, temporary files, thumbnails,
+Xcode derived data & archives, Mail attachment caches, old installers,
+app leftovers from uninstalled apps, broken symlinks, and the Trash — plus
+system insights (storage, memory pressure, CPU load, login items, old
+downloads, battery health).
 
-## The Safety Model
+> Language-file stripping is deliberately **not** offered: removing `.lproj`
+> folders breaks app code signatures on modern macOS.
 
-Everything destructive flows through **`SafetyGuard`** (`Utilities/SafetyGuard.swift`):
+### Accurate storage & Trash
+- APFS numbers matching Finder: total, used, strictly free, **purgeable**,
+  and available (`volumeAvailableCapacityForImportantUsage`).
+- Trash size covers `~/.Trash` **and** per-volume `.Trashes`, updates live
+  via a kernel file watcher, previews contents, and empties safely after
+  confirmation. Sizes descend into packages (a trashed `.app` counts fully).
+- When macOS blocks Trash access, the app shows a Full Disk Access prompt —
+  never a fake zero.
 
-1. **Allow-list, not block-list** — automatic cleaning only ever operates inside explicitly approved roots (`~/Library/Caches`, `~/Library/Logs`, DerivedData, temp, `.Trash`…).
-2. **Forbidden components** — any path containing `Documents`, `Desktop`, `Pictures`, `Music`, `Movies`, `.git`, `node_modules`, `.ssh`… is refused outright, wherever it appears.
-3. **Trash first** — items are moved to the Trash (restorable) whenever possible; hard deletion is a fallback only for guard-approved cache paths.
-4. **Review-based tools** (large files, duplicates, uninstaller) act only on files you explicitly ticked, always via Trash, and the duplicate finder physically cannot remove the last copy of a file.
-5. **Every clean requires confirmation** and shows the exact recoverable amount first.
+### Performance monitor
+1-second refresh, all values from native APIs (nothing estimated):
+- **CPU** — total/user/system, per-core bars, load average, P/E core layout
+- **Memory** — Activity-Monitor-style used/app/wired/compressed/cached,
+  swap, and kernel memory-pressure level
+- **Disk** — read/write throughput (IOKit block-storage statistics),
+  capacity, SMART status
+- **Network** — up/down throughput with live chart, interface, IP, Wi-Fi
+  SSID/signal/link rate (when authorized)
+- **GPU** — utilization and memory from the accelerator driver (when exposed)
+- **Battery** — charge, health, cycles, raw capacities (mAh), temperature,
+  time remaining
+- **Sensors** — fan RPM and CPU/GPU temperatures via the SMC (per-model key
+  discovery; shows "not available" honestly on Macs that expose nothing)
 
-## Permissions & Sandbox Notes
+### Tools
+Large files finder, SHA-256-verified duplicate finder, app uninstaller with
+leftover discovery, and login-item manager.
 
-- **App Sandbox is disabled** in this build. A cleaner fundamentally needs to enumerate and remove files in `~/Library/Caches` and friends, which the sandbox forbids. This is the same trade-off every cleaning utility makes (distribute via Developer ID + notarization, not the App Store).
-- **Full Disk Access** (optional) — only needed for Safari's cache and some diagnostic logs. The Settings tab explains this and deep-links to System Settings. Nothing is requested at first launch.
-- **Admin prompt** — only for `purge` (Free Memory) and the DNS flush; both explain themselves before macOS asks for your password.
+### Menu bar
+PureClean keeps running in the menu bar when the window closes: live status
+lines, Open, Quick Scan, Free Memory, Trash size, Settings, Quit. The icon
+can be hidden in Settings; launch-at-login is available via `SMAppService`.
 
-## Architecture (MVVM)
+## Safety model
 
+Every destructive operation passes through `SafetyGuard`:
+- deletions are only allowed inside an allow-list of cache/log/temp roots;
+- forbidden path components (Documents, Desktop, Pictures, `.git`, `.ssh`…)
+  are refused anywhere;
+- user-reviewed removals (large files, duplicates, uninstaller, leftovers)
+  are always trashed, never hard-deleted.
+
+## Building
+
+```bash
+brew install xcodegen
+xcodegen generate           # project.yml → PureClean.xcodeproj
+open PureClean.xcodeproj    # or:
+xcodebuild -project PureClean.xcodeproj -scheme PureClean -configuration Release build
 ```
-PureClean/
-├── App/            PureCleanApp (MenuBarExtra) · AppState (composition root)
-├── Models/         CleanCategory, LargeFile, DuplicateGroup, SystemSnapshot…
-├── ViewModels/     DashboardViewModel (presentation-only derivations)
-├── Managers/       @Observable domain managers:
-│                   SystemStatsManager (CPU/RAM/disk/network/battery, 1 s tick)
-│                   CleanerManager · MemoryManager · DiskAnalyzerManager
-│                   LargeFileFinder · DuplicateFinder · AppUninstaller
-│                   StartupManager · NotificationManager · ScheduleManager
-│                   PermissionManager
-├── Utilities/      SafetyGuard · ShellRunner · formatters & FileManager helpers
-└── Views/          Dashboard / Clean / Tools / Monitor / Settings + Components
+
+### Installer
+
+```bash
+./build-dmg.sh              # Release build → dist/PureClean.dmg
 ```
 
-State uses the modern **`@Observable`** macro (Observation framework) — views track exactly the properties they read; heavy scans run off the main actor via `Task.detached` task groups.
+Produces a branded, Retina drag-to-install DMG (rendered background,
+positioned icons, volume icon, UDZO-compressed). `make-icon.swift` and
+`make-dmg-background.swift` regenerate all artwork from code.
 
-## Future Ideas (scaffolded for)
+## Permissions
 
-Battery optimization tips, menu shortcuts, widgets, iCloud-synced settings, AI cleaning recommendations, exportable cleaning reports.
+| Permission | Why | Required? |
+|---|---|---|
+| Full Disk Access | Measure/empty the Trash, Safari cache, Mail caches | Optional — features degrade honestly |
+| Notifications | Low-storage / high-memory-pressure alerts | Optional |
+| Automation (Finder) | Only used by `build-dmg.sh` for window layout | Dev only |
 
----
-© 2026 AWS NextGen IT LTD · Built with SwiftUI
+© 2026 AWS NextGen IT LTD

@@ -1,9 +1,9 @@
 import Foundation
 import Observation
 
-/// Runs Smart Clean automatically on a daily/weekly/monthly cadence.
-/// The check runs hourly while the app is in the menu bar; a clean only
-/// fires when the chosen interval has elapsed since the last one.
+/// Runs the always-safe clean automatically on a daily/weekly/monthly
+/// cadence. The check runs hourly while the app lives in the menu bar; a
+/// clean only fires when the chosen interval has elapsed since the last one.
 @MainActor
 @Observable
 final class ScheduleManager {
@@ -12,7 +12,7 @@ final class ScheduleManager {
         didSet { UserDefaults.standard.set(schedule.rawValue, forKey: "cleanSchedule") }
     }
 
-    private weak var cleaner: CleanerManager?
+    private weak var scanner: ScanEngine?
     private weak var notifications: NotificationManager?
     private var timer: Timer?
 
@@ -21,8 +21,8 @@ final class ScheduleManager {
         schedule = CleanSchedule(rawValue: raw) ?? .off
     }
 
-    func start(cleaner: CleanerManager, notifications: NotificationManager) {
-        self.cleaner = cleaner
+    func start(scanner: ScanEngine, notifications: NotificationManager) {
+        self.scanner = scanner
         self.notifications = notifications
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
@@ -36,16 +36,12 @@ final class ScheduleManager {
     }
 
     func runIfDue() async {
-        guard let interval = schedule.interval, let cleaner else { return }
+        guard let interval = schedule.interval, let scanner else { return }
         let last = lastCleanDate ?? .distantPast
-        guard Date().timeIntervalSince(last) >= interval, !cleaner.isCleaning else { return }
+        guard Date().timeIntervalSince(last) >= interval,
+              !scanner.isCleaning, !scanner.isScanning else { return }
 
-        await cleaner.scan()
-        // Scheduled cleans only touch the always-safe default categories.
-        for index in cleaner.categories.indices {
-            cleaner.categories[index].isSelected = cleaner.categories[index].defaultEnabled
-        }
-        let result = await cleaner.cleanSelected()
+        let result = await scanner.quickCleanSafe()
         if result.freedBytes > 0 {
             notifications?.notifyCleanFinished(freed: result.freedBytes)
         }

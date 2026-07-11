@@ -20,6 +20,7 @@ enum SafetyGuard {
         home.appendingPathComponent("Library/Developer/CoreSimulator/Caches"),
         home.appendingPathComponent(".Trash"),
         home.appendingPathComponent("Library/Application Support/CrashReporter"),
+        home.appendingPathComponent("Library/Containers/com.apple.mail/Data/Library/Mail Downloads"),
         FileManager.default.temporaryDirectory,
         URL(fileURLWithPath: NSTemporaryDirectory()),
     ]

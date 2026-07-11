@@ -9,24 +9,37 @@ struct LargeFilesView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Picker("Larger than", selection: Bindable(app.largeFiles).threshold) {
-                    ForEach(LargeFileFinder.Threshold.allCases) { t in
-                        Text(t.label).tag(t)
+            VStack(spacing: Theme.gridSpacing) {
+                PageHeader("Large Files",
+                           subtitle: "Find the biggest files in your home folder. You review everything before anything moves.") {
+                    HStack(spacing: 10) {
+                        Picker("", selection: Bindable(app.largeFiles).threshold) {
+                            ForEach(LargeFileFinder.Threshold.allCases) { threshold in
+                                Text(threshold.label).tag(threshold)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .frame(width: 220)
+                        Button {
+                            Task { await finder.scan() }
+                        } label: {
+                            if finder.isScanning {
+                                ProgressView().controlSize(.small)
+                            } else {
+                                Label("Scan", systemImage: "magnifyingglass")
+                            }
+                        }
+                        .controlSize(.large)
+                        .disabled(finder.isScanning)
                     }
                 }
-                .pickerStyle(.segmented)
-                Button {
-                    Task { await finder.scan() }
-                } label: {
-                    if finder.isScanning { ProgressView().controlSize(.small) }
-                    else { Label("Scan", systemImage: "magnifyingglass") }
+                if let result {
+                    ResultBanner(result: result)
                 }
-                .disabled(finder.isScanning)
             }
-            .padding(12)
-
-            Divider()
+            .padding(Theme.pagePadding)
+            .padding(.bottom, result == nil ? 0 : 4)
 
             if finder.files.isEmpty {
                 ContentUnavailableView(
@@ -34,67 +47,95 @@ struct LargeFilesView: View {
                     systemImage: "doc.zipper",
                     description: Text(finder.isScanning
                         ? "This can take a minute on large disks."
-                        : "Pick a threshold and press Scan. You review everything before anything is removed."))
+                        : "Pick a size threshold and press Scan."))
                 .frame(maxHeight: .infinity)
             } else {
-                List(finder.files, selection: Bindable(app.largeFiles).selection) { file in
-                    HStack {
-                        Toggle("", isOn: Binding(
-                            get: { finder.selection.contains(file.url) },
-                            set: { on in
-                                if on { finder.selection.insert(file.url) }
-                                else { finder.selection.remove(file.url) }
-                            }))
-                        .labelsHidden()
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(file.url.lastPathComponent)
-                                .font(.system(size: 11.5, weight: .medium))
-                                .lineLimit(1)
-                            Text(file.url.deletingLastPathComponent().path
-                                .replacingOccurrences(of: NSHomeDirectory(), with: "~"))
-                                .font(.system(size: 9))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                        }
-                        Spacer()
-                        Text(file.size.bytesFormatted)
-                            .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        Button {
-                            NSWorkspace.shared.activateFileViewerSelecting([file.url])
-                        } label: {
-                            Image(systemName: "magnifyingglass.circle")
-                        }
-                        .buttonStyle(.plain)
-                        .help("Reveal in Finder")
-                    }
+                List(finder.files) { file in
+                    LargeFileRow(file: file, finder: finder)
+                        .listRowSeparator(.hidden)
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
 
-                Divider()
+                Divider().opacity(0.5)
                 HStack {
-                    if let result {
-                        Text("Moved \(result.removedItems) items (\(result.freedBytes.bytesFormatted)) to Trash")
-                            .font(.system(size: 10)).foregroundStyle(.green)
-                    }
+                    Text("\(finder.files.count) files found · \(finder.selection.count) selected")
+                        .font(Theme.caption())
+                        .foregroundStyle(.secondary)
                     Spacer()
-                    Button(role: .destructive) {
+                    PrimaryGradientButton(
+                        title: "Move \(finder.selectedBytes.bytesFormatted) to Trash",
+                        icon: "trash", fullWidth: false
+                    ) {
                         showConfirm = true
-                    } label: {
-                        Label("Move \(finder.selectedBytes.bytesFormatted) to Trash", systemImage: "trash")
                     }
                     .disabled(finder.selection.isEmpty)
+                    .opacity(finder.selection.isEmpty ? 0.5 : 1)
                 }
-                .padding(10)
+                .padding(.horizontal, Theme.pagePadding)
+                .padding(.vertical, 12)
+                .background(.bar)
             }
         }
-        .navigationTitle("Large Files")
-        .confirmOverlay(
-            isPresented: $showConfirm,
-            title: "Move \(finder.selection.count) files to Trash?",
-            message: "Files go to the Trash — you can restore them anytime before emptying it.",
-            confirmTitle: "Move to Trash"
+        .confirmationDialog(
+            "Move \(finder.selection.count) file\(finder.selection.count == 1 ? "" : "s") to Trash?",
+            isPresented: $showConfirm, titleVisibility: .visible
         ) {
-            result = finder.trashSelected()
+            Button("Move to Trash", role: .destructive) {
+                result = finder.trashSelected()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Files go to the Trash — you can restore them anytime before emptying it.")
         }
+    }
+}
+
+private struct LargeFileRow: View {
+    let file: LargeFile
+    let finder: LargeFileFinder
+
+    private var isSelected: Bool { finder.selection.contains(file.url) }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Toggle("", isOn: Binding(
+                get: { isSelected },
+                set: { on in
+                    if on { finder.selection.insert(file.url) }
+                    else { finder.selection.remove(file.url) }
+                }))
+            .toggleStyle(.checkbox)
+            .labelsHidden()
+            Image(nsImage: NSWorkspace.shared.icon(forFile: file.url.path))
+                .resizable()
+                .frame(width: 26, height: 26)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(file.url.lastPathComponent)
+                    .font(.system(size: 12.5, weight: .medium))
+                    .lineLimit(1)
+                Text(file.url.deletingLastPathComponent().abbreviatedPath)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            Spacer()
+            Text(file.modified.formatted(date: .abbreviated, time: .omitted))
+                .font(.system(size: 10))
+                .foregroundStyle(.tertiary)
+            Text(file.size.bytesFormatted)
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .frame(width: 76, alignment: .trailing)
+            Button {
+                NSWorkspace.shared.activateFileViewerSelecting([file.url])
+            } label: {
+                Image(systemName: "magnifyingglass.circle")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Reveal in Finder")
+        }
+        .padding(.vertical, 3)
     }
 }
