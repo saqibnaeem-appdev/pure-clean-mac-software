@@ -26,6 +26,11 @@ final class AppState {
     /// Currently selected sidebar page.
     var route: Route = .dashboard
 
+    /// True when launched by the docs/screenshot tooling
+    /// (`open PureClean.app --args -route performance`) — suppresses the
+    /// setup sheet so pages can be captured cleanly.
+    private(set) var isScreenshotSession = false
+
     /// The dashboard window, captured so the dock/menu-bar reopen paths can
     /// bring it back without spawning duplicates.
     weak var mainWindow: NSWindow?
@@ -33,6 +38,26 @@ final class AppState {
     private var thresholdTimer: Timer?
 
     private init() {
+        // Launch overrides for the docs/screenshot tooling.
+        if let raw = UserDefaults.standard.string(forKey: "route"),
+           let initial = Route(rawValue: raw) {
+            route = initial
+            isScreenshotSession = true
+        }
+        if UserDefaults.standard.bool(forKey: "autoscan") {
+            Task { [weak self] in
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                self?.runSmartScan()
+            }
+        }
+        if UserDefaults.standard.bool(forKey: "autoscanLarge") {
+            Task { [weak self] in
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                self?.largeFiles.threshold = .mb500
+                await self?.largeFiles.scan()
+            }
+        }
+
         monitor.start()
         disk.refreshOverview()
         trash.startWatching()

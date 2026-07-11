@@ -25,6 +25,7 @@ final class LargeFileFinder {
     var threshold: Threshold = .gb1
     private(set) var files: [LargeFile] = []
     private(set) var isScanning = false
+    private(set) var hasScanned = false
     var selection = Set<URL>()
 
     var selectedBytes: Int64 {
@@ -36,27 +37,52 @@ final class LargeFileFinder {
         isScanning = true
         files = []
         selection = []
-        defer { isScanning = false }
+        defer {
+            isScanning = false
+            hasScanned = true
+        }
 
         let limit = threshold.rawValue
         let home = FileManager.default.homeDirectoryForCurrentUser
         let found = await Task.detached(priority: .userInitiated) { () -> [LargeFile] in
             var results: [LargeFile] = []
-            let keys: [URLResourceKey] = [.totalFileAllocatedSizeKey, .isRegularFileKey, .contentModificationDateKey]
+            let keys: [URLResourceKey] = [
+                .totalFileAllocatedSizeKey, .isRegularFileKey,
+                .contentModificationDateKey, .isPackageKey, .isDirectoryKey,
+            ]
+            // Hidden folders are included deliberately — developer caches
+            // like ~/.gradle or ~/.android are the biggest offenders.
             guard let enumerator = FileManager.default.enumerator(
                 at: home, includingPropertiesForKeys: keys,
-                options: [.skipsHiddenFiles, .skipsPackageDescendants],
+                options: [],
                 errorHandler: { _, _ in true }
             ) else { return [] }
 
             for case let url as URL in enumerator {
-                // Don't descend into the Library — caches are handled by Smart Clean.
-                if url.pathComponents.contains("Library") {
+                // Library is Smart Scan's territory; the Trash has its own page.
+                if enumerator.level == 1 {
+                    let name = url.lastPathComponent
+                    if name == "Library" || name == ".Trash" {
+                        enumerator.skipDescendants()
+                        continue
+                    }
+                }
+                guard let values = try? url.resourceValues(forKeys: Set(keys)) else { continue }
+
+                // Packages (Photos libraries, VMs, .app bundles…) count as a
+                // single item, the way Finder presents them.
+                if values.isPackage == true {
                     enumerator.skipDescendants()
+                    let size = FileManager.default.directorySize(at: url)
+                    if size >= limit {
+                        results.append(LargeFile(
+                            url: url, size: size,
+                            modified: values.contentModificationDate ?? .distantPast))
+                    }
                     continue
                 }
-                guard let values = try? url.resourceValues(forKeys: Set(keys)),
-                      values.isRegularFile == true,
+
+                guard values.isRegularFile == true,
                       let size = values.totalFileAllocatedSize, Int64(size) >= limit
                 else { continue }
                 results.append(LargeFile(

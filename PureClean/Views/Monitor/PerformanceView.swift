@@ -140,8 +140,25 @@ struct PerformanceView: View {
                     Text("Pressure")
                         .font(Theme.caption())
                         .foregroundStyle(.secondary)
-                    Spacer()
                     Badge(text: memory.pressure.label, color: memory.pressure.color)
+                    Spacer()
+                    if let freed = app.memory.lastFreed {
+                        Text("Freed \(freed.bytesFormatted) ✓")
+                            .font(.system(size: 10.5, weight: .semibold))
+                            .foregroundStyle(.green)
+                    }
+                    Button {
+                        Task { await app.memory.freeMemory() }
+                    } label: {
+                        if app.memory.isFreeing {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Label("Free Memory", systemImage: "memorychip")
+                        }
+                    }
+                    .controlSize(.small)
+                    .disabled(app.memory.isFreeing)
+                    .help("Purges disk caches via the system `purge` tool — no app is ever closed.")
                 }
             }
         }

@@ -74,9 +74,56 @@ struct DashboardView: View {
                             value: "↓ \(snap.network.inPerSec.rateFormatted)",
                             detail: "↑ \(snap.network.outPerSec.rateFormatted)")
                 }
+
+                quickActions
             }
             .padding(Theme.pagePadding)
         }
+    }
+
+    // MARK: - Quick actions
+
+    /// One-click maintenance: free RAM and flush DNS, right on the dashboard.
+    private var quickActions: some View {
+        HStack(spacing: 14) {
+            IconBadge(systemName: "bolt.fill", tint: .yellow, size: 30)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Quick Actions")
+                    .font(.system(size: 13, weight: .semibold))
+                Text(memoryActionSubtitle)
+                    .font(Theme.footnote())
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button {
+                let scanner = app.scanner
+                Task.detached { _ = scanner.flushDNS() }
+            } label: {
+                Label("Flush DNS", systemImage: "network.badge.shield.half.filled")
+            }
+            .controlSize(.large)
+            .help("Clears the DNS cache — fixes stale name-resolution issues. Asks for your password.")
+            PrimaryGradientButton(
+                title: app.memory.isFreeing ? "Freeing…" : "Free Memory",
+                icon: "memorychip",
+                isBusy: app.memory.isFreeing,
+                fullWidth: false
+            ) {
+                Task { await app.memory.freeMemory() }
+            }
+        }
+        .glassCard()
+        .hoverLift()
+    }
+
+    private var memoryActionSubtitle: String {
+        if app.memory.isFreeing {
+            return "Purging disk caches — this takes a few seconds…"
+        }
+        if let freed = app.memory.lastFreed {
+            return "Freed \(freed.bytesFormatted) on the last run. No app is ever closed."
+        }
+        return "Free Memory purges disk caches (admin prompt) — no app is ever closed."
     }
 
     private var greetingSubtitle: String {

@@ -43,10 +43,14 @@ struct LargeFilesView: View {
 
             if finder.files.isEmpty {
                 ContentUnavailableView(
-                    finder.isScanning ? "Scanning your home folder…" : "No results yet",
+                    finder.isScanning ? "Scanning your home folder…"
+                        : finder.hasScanned ? "No files over \(finder.threshold.label) found"
+                        : "No results yet",
                     systemImage: "doc.zipper",
                     description: Text(finder.isScanning
-                        ? "This can take a minute on large disks."
+                        ? "Hidden developer folders and app libraries are included. This can take a minute."
+                        : finder.hasScanned
+                        ? "Try a smaller threshold — hidden folders and packages are included in the scan."
                         : "Pick a size threshold and press Scan."))
                 .frame(maxHeight: .infinity)
             } else {
@@ -64,7 +68,9 @@ struct LargeFilesView: View {
                         .foregroundStyle(.secondary)
                     Spacer()
                     PrimaryGradientButton(
-                        title: "Move \(finder.selectedBytes.bytesFormatted) to Trash",
+                        title: finder.selection.isEmpty
+                            ? "Move to Trash"
+                            : "Move \(finder.selectedBytes.bytesFormatted) to Trash",
                         icon: "trash", fullWidth: false
                     ) {
                         showConfirm = true

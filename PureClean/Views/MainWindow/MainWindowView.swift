@@ -38,7 +38,7 @@ struct MainWindowView: View {
     private var onboardingBinding: Binding<Bool> {
         Binding(
             get: {
-                guard !setupDismissedThisSession else { return false }
+                guard !setupDismissedThisSession, !app.isScreenshotSession else { return false }
                 return !app.settings.hasCompletedOnboarding
                     || !app.permissions.hasFullDiskAccess
             },

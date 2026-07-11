@@ -4,3 +4,5 @@ build/
 xcuserdata/
 .DS_Store
 dist/
+config.bat
+node_modules
