@@ -28,4 +28,16 @@ final class PermissionManager {
             NSWorkspace.shared.open(url)
         }
     }
+
+    /// Full Disk Access only applies to a freshly launched process, so after
+    /// granting it the app must restart to actually gain access.
+    func relaunchApp() {
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(
+            at: Bundle.main.bundleURL, configuration: configuration) { _, _ in }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            NSApp.terminate(nil)
+        }
+    }
 }

@@ -45,17 +45,23 @@ struct AuroraBackground: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(RadialGradient(colors: [.blue.opacity(0.16), .clear],
+                .fill(RadialGradient(colors: [.blue.opacity(0.20), .clear],
                                      center: .center, startRadius: 0, endRadius: 280))
                 .frame(width: 560, height: 560)
                 .offset(x: animate ? -180 : -120, y: animate ? -220 : -280)
                 .blur(radius: 60)
             Circle()
-                .fill(RadialGradient(colors: [.purple.opacity(0.13), .clear],
+                .fill(RadialGradient(colors: [.purple.opacity(0.18), .clear],
                                      center: .center, startRadius: 0, endRadius: 260))
                 .frame(width: 520, height: 520)
                 .offset(x: animate ? 260 : 200, y: animate ? 180 : 240)
                 .blur(radius: 70)
+            Circle()
+                .fill(RadialGradient(colors: [.pink.opacity(0.10), .clear],
+                                     center: .center, startRadius: 0, endRadius: 220))
+                .frame(width: 440, height: 440)
+                .offset(x: animate ? 60 : 120, y: animate ? -60 : 20)
+                .blur(radius: 80)
         }
         .allowsHitTesting(false)
         .onAppear {

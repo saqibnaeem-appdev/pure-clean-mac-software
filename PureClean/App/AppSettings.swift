@@ -9,6 +9,11 @@ final class AppSettings {
 
     private static let defaults = UserDefaults.standard
 
+    /// One-time welcome + permissions flow on first launch.
+    var hasCompletedOnboarding: Bool {
+        didSet { Self.defaults.set(hasCompletedOnboarding, forKey: "settings.onboarded") }
+    }
+
     /// Keep the sparkle in the menu bar (quick actions + reopen).
     var showMenuBarIcon: Bool {
         didSet { Self.defaults.set(showMenuBarIcon, forKey: "settings.menuBarIcon") }
@@ -34,6 +39,7 @@ final class AppSettings {
     }
 
     init() {
+        hasCompletedOnboarding = Self.defaults.bool(forKey: "settings.onboarded")
         showMenuBarIcon = Self.defaults.object(forKey: "settings.menuBarIcon") as? Bool ?? true
         showWindowAtLaunch = Self.defaults.object(forKey: "settings.windowAtLaunch") as? Bool ?? true
         launchAtLogin = SMAppService.mainApp.status == .enabled

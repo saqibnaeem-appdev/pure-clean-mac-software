@@ -49,6 +49,11 @@ private struct GeneralSettings: View {
             }
 
             Section {
+                Button("Show Welcome Guide Again") {
+                    settings.hasCompletedOnboarding = false
+                    NSApp.sendAction(#selector(NSWindow.makeKeyAndOrderFront(_:)), to: nil, from: nil)
+                    AppState.shared.mainWindow?.makeKeyAndOrderFront(nil)
+                }
                 Button("Quit PureClean") {
                     NSApplication.shared.terminate(nil)
                 }

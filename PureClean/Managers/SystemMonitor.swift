@@ -262,33 +262,53 @@ final class SystemMonitor {
 
     // MARK: - Network
 
+    /// Reads the kernel's 64-bit per-interface byte counters (NET_RT_IFLIST2)
+    /// and only counts physical `en*` interfaces — so peer-to-peer (awdl),
+    /// VPN tunnels (utun) and bridges don't inflate the number, and the
+    /// counters can't wrap the way the 32-bit `getifaddrs` ones do.
     private func readNetworkRate() -> (rx: Int64, tx: Int64) {
-        var addrs: UnsafeMutablePointer<ifaddrs>?
-        guard getifaddrs(&addrs) == 0 else { return (0, 0) }
-        defer { freeifaddrs(addrs) }
+        // CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST2 (6), 0
+        var mib: [Int32] = [CTL_NET, PF_ROUTE, 0, 0, 6, 0]
+        var length = 0
+        guard sysctl(&mib, u_int(mib.count), nil, &length, nil, 0) == 0, length > 0 else {
+            return (0, 0)
+        }
+        var buffer = [UInt8](repeating: 0, count: length)
+        guard sysctl(&mib, u_int(mib.count), &buffer, &length, nil, 0) == 0 else {
+            return (0, 0)
+        }
 
         var rx: UInt64 = 0, tx: UInt64 = 0
-        var cursor = addrs
-        while let current = cursor {
-            let ifa = current.pointee
-            if let addr = ifa.ifa_addr, addr.pointee.sa_family == UInt8(AF_LINK),
-               let dataPtr = ifa.ifa_data {
-                let name = String(cString: ifa.ifa_name)
-                if !name.hasPrefix("lo") {
-                    let data = dataPtr.assumingMemoryBound(to: if_data.self).pointee
-                    rx &+= UInt64(data.ifi_ibytes)
-                    tx &+= UInt64(data.ifi_obytes)
+        buffer.withUnsafeBytes { raw in
+            var offset = 0
+            while offset + MemoryLayout<if_msghdr>.size <= length {
+                let header = raw.loadUnaligned(fromByteOffset: offset, as: if_msghdr.self)
+                let messageLength = Int(header.ifm_msglen)
+                guard messageLength > 0 else { break }
+
+                // RTM_IFINFO2 (0x12) carries the 64-bit if_data64 statistics.
+                if header.ifm_type == 0x12,
+                   offset + MemoryLayout<if_msghdr2>.size <= length {
+                    let info = raw.loadUnaligned(fromByteOffset: offset, as: if_msghdr2.self)
+                    var name = [CChar](repeating: 0, count: Int(IF_NAMESIZE) + 1)
+                    if_indextoname(UInt32(info.ifm_index), &name)
+                    if String(cString: name).hasPrefix("en") {
+                        rx &+= info.ifm_data.ifi_ibytes
+                        tx &+= info.ifm_data.ifi_obytes
+                    }
                 }
+                offset += messageLength
             }
-            cursor = ifa.ifa_next
         }
 
         let now = Date()
         defer { previousNet = (rx, tx, now) }
-        guard let previous = previousNet else { return (0, 0) }
+        guard let previous = previousNet, rx >= previous.rx, tx >= previous.tx else {
+            return (0, 0)
+        }
         let seconds = max(0.25, now.timeIntervalSince(previous.at))
-        let dRx = Double(rx &- previous.rx) / seconds
-        let dTx = Double(tx &- previous.tx) / seconds
+        let dRx = Double(rx - previous.rx) / seconds
+        let dTx = Double(tx - previous.tx) / seconds
         return (Int64(max(0, dRx)), Int64(max(0, dTx)))
     }
 

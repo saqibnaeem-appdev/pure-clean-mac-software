@@ -14,10 +14,13 @@
 		0FCDC99D28D892328AFE4A99 /* UninstallerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F9D884AF80B411E9808A522 /* UninstallerView.swift */; };
 		119B307C9BD865EE9F1811E8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7CBDC5F0A1292E224CD802 /* SettingsView.swift */; };
 		1C22B7F6DF862600B10498B7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6BB571939E19C35019EC37E6 /* Assets.xcassets */; };
+		1F5EF98DAC308797B302F496 /* BricolageGrotesque-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B03F17B75E7265296FBB6C0A /* BricolageGrotesque-Bold.ttf */; };
 		30E18B147095525CD8189A55 /* SystemMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 350E459A78B044689394085C /* SystemMonitor.swift */; };
 		3E27F6935BA8F41519F20200 /* ShellRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD46284B4908ED5BC442FF3E /* ShellRunner.swift */; };
 		4F1F0D820CC46CC94B3B35D4 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91AE555B70E197358DDD4172 /* AppSettings.swift */; };
 		5973D491BA6E2D7BC0D5212C /* ChartViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD9BBBAFC446530FFD7FDDBD /* ChartViews.swift */; };
+		5B80528546326A1DBDE7D4CA /* BricolageGrotesque-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1BF0B2A005D7AA5ABBBB5F7B /* BricolageGrotesque-ExtraBold.ttf */; };
+		605299C289522E8160399E9A /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 099BC040AB07485A772C681B /* OnboardingView.swift */; };
 		66EF0B9D8BDECE37DBFEE21F /* DuplicatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED2DB66691652D3013A9651 /* DuplicatesView.swift */; };
 		790F550097A5215446AC21F5 /* WindowChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD2C9D265D0DE3B785C92D41 /* WindowChrome.swift */; };
 		8697098FB624F302973AB559 /* MemoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AEF99F82EBF6F69BC6C6B87 /* MemoryManager.swift */; };
@@ -32,6 +35,7 @@
 		B7C248E70B0142891C9CBD31 /* TrashService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 365824937ABEEA0824D979F2 /* TrashService.swift */; };
 		B8CA821AC2BCE58AC698B1CA /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCE54D5F22F6617075314BC /* PermissionManager.swift */; };
 		BBC0702B4436D51AAEB016B7 /* SMCService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C631AC979B9DC2CCE9BD429 /* SMCService.swift */; };
+		BC4FA1D22BE977A330B209D9 /* BricolageGrotesque-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 76B9E82C42B55F69F89E2324 /* BricolageGrotesque-SemiBold.ttf */; };
 		BEF25B991785ABFBB883CBFB /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E8D04037013BC1C5A95E94F /* Extensions.swift */; };
 		C090311DE7D70428F7255C42 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6927F33DC298CF4CD653B1DF /* DashboardView.swift */; };
 		C4D1C68C0EEF12256B85D0AC /* ScheduleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FAF7D5AF9938F3710012815 /* ScheduleManager.swift */; };
@@ -39,9 +43,11 @@
 		CE8DB2B035418E3EE5954619 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEC9C1AB421F105C795687C2 /* AppState.swift */; };
 		D80010105748B6FFDCCFD03D /* LargeFileFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D1BAB8E065F0D97DF180DE8 /* LargeFileFinder.swift */; };
 		DBB0C4C5ABFBDB06C1FB87D1 /* ScanEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F75D84DD76233839E6864D /* ScanEngine.swift */; };
+		E4540C86A7F9744ACE9E22A4 /* BricolageGrotesque-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4056FABA625D463092A3ED9C /* BricolageGrotesque-Medium.ttf */; };
 		EB2077E75BB9B03C658C4E03 /* AppUninstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E5B78887DE9C5002BE1F2C /* AppUninstaller.swift */; };
 		ECFA9745A4F18BF6D6E5F8BD /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C3824B57DE02D531E83C94B /* NotificationManager.swift */; };
 		F0CACF8F45ABC0C527741EEB /* DiskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B30B80E1BAD743DD7D8EFD2 /* DiskService.swift */; };
+		F30B75F6664D475893029090 /* BricolageGrotesque-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FFDEA3B5041A06B29294E0DC /* BricolageGrotesque-Regular.ttf */; };
 		FBA92F796ADA231E6875CCC7 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C655CAE1B6D4333437B60E72 /* Theme.swift */; };
 		FF9993A64188FCB17822CAF2 /* StartupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED13701EC27AF72D1272AA1B /* StartupView.swift */; };
 /* End PBXBuildFile section */
@@ -49,7 +55,9 @@
 /* Begin PBXFileReference section */
 		03F75D84DD76233839E6864D /* ScanEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanEngine.swift; sourceTree = "<group>"; };
 		0462D4291870F17A40A20DBA /* SmartScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartScanView.swift; sourceTree = "<group>"; };
+		099BC040AB07485A772C681B /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		0D1BAB8E065F0D97DF180DE8 /* LargeFileFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LargeFileFinder.swift; sourceTree = "<group>"; };
+		1BF0B2A005D7AA5ABBBB5F7B /* BricolageGrotesque-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "BricolageGrotesque-ExtraBold.ttf"; sourceTree = "<group>"; };
 		1C3824B57DE02D531E83C94B /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		1F9D884AF80B411E9808A522 /* UninstallerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UninstallerView.swift; sourceTree = "<group>"; };
 		2886C742825BF9C6731A0D55 /* StorageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageView.swift; sourceTree = "<group>"; };
@@ -57,6 +65,7 @@
 		350E459A78B044689394085C /* SystemMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitor.swift; sourceTree = "<group>"; };
 		365824937ABEEA0824D979F2 /* TrashService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrashService.swift; sourceTree = "<group>"; };
 		3E8D04037013BC1C5A95E94F /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		4056FABA625D463092A3ED9C /* BricolageGrotesque-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "BricolageGrotesque-Medium.ttf"; sourceTree = "<group>"; };
 		4AEF99F82EBF6F69BC6C6B87 /* MemoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryManager.swift; sourceTree = "<group>"; };
 		5583CCE6C8E4A9CF84921626 /* TrashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrashView.swift; sourceTree = "<group>"; };
 		5D7EB712D70D0764003EAF28 /* PureCleanApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PureCleanApp.swift; sourceTree = "<group>"; };
@@ -64,6 +73,7 @@
 		5FAF7D5AF9938F3710012815 /* ScheduleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleManager.swift; sourceTree = "<group>"; };
 		6927F33DC298CF4CD653B1DF /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		6BB571939E19C35019EC37E6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		76B9E82C42B55F69F89E2324 /* BricolageGrotesque-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "BricolageGrotesque-SemiBold.ttf"; sourceTree = "<group>"; };
 		9121838016B081471149F910 /* MenuBarContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContent.swift; sourceTree = "<group>"; };
 		91AE555B70E197358DDD4172 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		9C631AC979B9DC2CCE9BD429 /* SMCService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMCService.swift; sourceTree = "<group>"; };
@@ -71,6 +81,7 @@
 		A8414F8816F1ACE53FA1DDFF /* PerformanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceView.swift; sourceTree = "<group>"; };
 		AC7CBDC5F0A1292E224CD802 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		AD2C9D265D0DE3B785C92D41 /* WindowChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowChrome.swift; sourceTree = "<group>"; };
+		B03F17B75E7265296FBB6C0A /* BricolageGrotesque-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "BricolageGrotesque-Bold.ttf"; sourceTree = "<group>"; };
 		B1947E3FA06FC34883668C35 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		B9FDD1759C735F36803AF06F /* StartupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupManager.swift; sourceTree = "<group>"; };
 		BBCE54D5F22F6617075314BC /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
@@ -85,6 +96,7 @@
 		FC424D18178C401A3EF4566C /* LargeFilesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LargeFilesView.swift; sourceTree = "<group>"; };
 		FD46284B4908ED5BC442FF3E /* ShellRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellRunner.swift; sourceTree = "<group>"; };
 		FEC9C1AB421F105C795687C2 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		FFDEA3B5041A06B29294E0DC /* BricolageGrotesque-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "BricolageGrotesque-Regular.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -127,6 +139,18 @@
 				AD2C9D265D0DE3B785C92D41 /* WindowChrome.swift */,
 			);
 			path = Design;
+			sourceTree = "<group>";
+		};
+		2FF78C9EC292797469AA4C20 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				B03F17B75E7265296FBB6C0A /* BricolageGrotesque-Bold.ttf */,
+				1BF0B2A005D7AA5ABBBB5F7B /* BricolageGrotesque-ExtraBold.ttf */,
+				4056FABA625D463092A3ED9C /* BricolageGrotesque-Medium.ttf */,
+				FFDEA3B5041A06B29294E0DC /* BricolageGrotesque-Regular.ttf */,
+				76B9E82C42B55F69F89E2324 /* BricolageGrotesque-SemiBold.ttf */,
+			);
+			path = Fonts;
 			sourceTree = "<group>";
 		};
 		385F481862605E08D6F7EAC2 /* App */ = {
@@ -217,6 +241,14 @@
 			path = PureClean;
 			sourceTree = "<group>";
 		};
+		A68946CB12F3729E2C19CE0C /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				099BC040AB07485A772C681B /* OnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
 		B1EED9A77B046183D967CB1A /* Storage */ = {
 			isa = PBXGroup;
 			children = (
@@ -237,6 +269,7 @@
 			isa = PBXGroup;
 			children = (
 				6BB571939E19C35019EC37E6 /* Assets.xcassets */,
+				2FF78C9EC292797469AA4C20 /* Fonts */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -256,6 +289,7 @@
 				3A93A8BF12332E5BD7A796B8 /* MainWindow */,
 				51D1AE9E6E2D819521642800 /* MenuBar */,
 				8E677AED32B773E9C2C8D7DB /* Monitor */,
+				A68946CB12F3729E2C19CE0C /* Onboarding */,
 				670C289B3C81BCAFAEAA1032 /* Scan */,
 				B7C4CA71ED07A4F760D97048 /* Settings */,
 				B1EED9A77B046183D967CB1A /* Storage */,
@@ -336,6 +370,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				1C22B7F6DF862600B10498B7 /* Assets.xcassets in Resources */,
+				1F5EF98DAC308797B302F496 /* BricolageGrotesque-Bold.ttf in Resources */,
+				5B80528546326A1DBDE7D4CA /* BricolageGrotesque-ExtraBold.ttf in Resources */,
+				E4540C86A7F9744ACE9E22A4 /* BricolageGrotesque-Medium.ttf in Resources */,
+				F30B75F6664D475893029090 /* BricolageGrotesque-Regular.ttf in Resources */,
+				BC4FA1D22BE977A330B209D9 /* BricolageGrotesque-SemiBold.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -363,6 +402,7 @@
 				B1B54E5B094E24CFA81CA775 /* MenuBarContent.swift in Sources */,
 				02AB4458AE20BFC750558FD3 /* Models.swift in Sources */,
 				ECFA9745A4F18BF6D6E5F8BD /* NotificationManager.swift in Sources */,
+				605299C289522E8160399E9A /* OnboardingView.swift in Sources */,
 				99376FB5153D99B65AB10F7A /* PerformanceView.swift in Sources */,
 				B8CA821AC2BCE58AC698B1CA /* PermissionManager.swift in Sources */,
 				955365BDC7D514D6772C6634 /* PureCleanApp.swift in Sources */,

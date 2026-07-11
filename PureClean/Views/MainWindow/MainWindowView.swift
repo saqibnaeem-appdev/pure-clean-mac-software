@@ -5,6 +5,9 @@ import AppKit
 /// full-window blur with a soft aurora glow.
 struct MainWindowView: View {
     @Environment(AppState.self) private var app
+    /// The setup sheet re-appears every launch until Full Disk Access is
+    /// granted — but never twice in one session.
+    @State private var setupDismissedThisSession = false
 
     /// Guards the one-time "start hidden in the menu bar" launch behaviour.
     private static var didHandleLaunch = false
@@ -23,6 +26,28 @@ struct MainWindowView: View {
             .ignoresSafeArea()
         }
         .background(WindowAccessor { window in configure(window) })
+        .sheet(isPresented: onboardingBinding) {
+            OnboardingView()
+                .environment(app)
+        }
+    }
+
+    /// Presents the welcome flow on first launch, and re-presents the
+    /// permissions step at launch while Full Disk Access is still missing —
+    /// the standard "set up once at the start" behaviour.
+    private var onboardingBinding: Binding<Bool> {
+        Binding(
+            get: {
+                guard !setupDismissedThisSession else { return false }
+                return !app.settings.hasCompletedOnboarding
+                    || !app.permissions.hasFullDiskAccess
+            },
+            set: { showing in
+                if !showing {
+                    setupDismissedThisSession = true
+                    app.settings.hasCompletedOnboarding = true
+                }
+            })
     }
 
     private var detail: some View {
@@ -126,22 +151,22 @@ struct SidebarView: View {
             footer
                 .padding(12)
         }
-        .frame(width: 218)
+        .frame(width: 232)
         .background(VisualEffectView(material: .sidebar).ignoresSafeArea())
     }
 
     private var header: some View {
-        HStack(spacing: 9) {
+        HStack(spacing: 10) {
             Image(systemName: "sparkles")
-                .font(.system(size: 16, weight: .bold))
+                .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(.white)
-                .frame(width: 30, height: 30)
+                .frame(width: 34, height: 34)
                 .background(Theme.brandGradient,
-                            in: RoundedRectangle(cornerRadius: 8.5, style: .continuous))
-                .shadow(color: .blue.opacity(0.35), radius: 6, y: 3)
+                            in: RoundedRectangle(cornerRadius: 9.5, style: .continuous))
+                .shadow(color: .purple.opacity(0.45), radius: 7, y: 3)
             VStack(alignment: .leading, spacing: 0) {
                 Text("PureClean")
-                    .font(.system(size: 14.5, weight: .bold))
+                    .font(Theme.display(15.5, .bold))
                 Text("System care")
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
@@ -186,33 +211,60 @@ private struct SidebarRow: View {
                 app.route = route
             }
         } label: {
-            HStack(spacing: 9) {
+            HStack(spacing: 10) {
+                // Colored icon chip (Settings-app style) — always tinted so
+                // the sidebar reads at a glance.
                 Image(systemName: route.icon)
-                    .font(.system(size: 12.5, weight: .semibold))
-                    .foregroundStyle(selected ? AnyShapeStyle(.white) : AnyShapeStyle(route.tint))
-                    .frame(width: 20)
+                    .font(.system(size: 11.5, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 25, height: 25)
+                    .background(
+                        route.tint.gradient,
+                        in: RoundedRectangle(cornerRadius: 7.5, style: .continuous))
+                    .shadow(color: route.tint.opacity(selected || hovering ? 0.5 : 0.22),
+                            radius: selected ? 5 : 3, y: 2)
+                    .scaleEffect(hovering && !selected ? 1.08 : 1)
                 Text(route.title)
                     .font(.system(size: 13, weight: selected ? .semibold : .medium))
-                    .foregroundStyle(selected ? .white : .primary)
+                    .foregroundStyle(Color.primary.opacity(selected ? 1 : 0.8))
                 Spacer(minLength: 0)
             }
             .padding(.vertical, 7)
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 9)
             .background {
                 if selected {
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .fill(Theme.brandGradient)
-                        .shadow(color: .blue.opacity(0.3), radius: 5, y: 2)
+                    pill
                         .matchedGeometryEffect(id: "sidebar-pill", in: namespace)
                 } else if hovering {
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .fill(.quaternary.opacity(0.55))
+                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .fill(.quaternary.opacity(0.45))
                 }
             }
-            .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
+        .animation(.spring(response: 0.28, dampingFraction: 0.75), value: hovering)
         .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    /// Frosted selection pill with a brand-tinted glow.
+    @ViewBuilder
+    private var pill: some View {
+        let shape = RoundedRectangle(cornerRadius: 11, style: .continuous)
+        if #available(macOS 26.0, *) {
+            shape
+                .fill(.clear)
+                .glassEffect(.regular.tint(route.tint.opacity(0.35)), in: shape)
+                .shadow(color: route.tint.opacity(0.25), radius: 7, y: 3)
+        } else {
+            shape
+                .fill(.quaternary.opacity(0.7))
+                .overlay(
+                    shape.strokeBorder(
+                        LinearGradient(colors: [.white.opacity(0.25), .white.opacity(0.04)],
+                                       startPoint: .top, endPoint: .bottom)))
+                .shadow(color: route.tint.opacity(0.25), radius: 7, y: 3)
+        }
     }
 }

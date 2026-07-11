@@ -5,15 +5,29 @@ import SwiftUI
 struct GlassCardModifier: ViewModifier {
     var padding: CGFloat = 18
 
+    private var shape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: Theme.corner, style: .continuous)
+    }
+
     func body(content: Content) -> some View {
-        content
-            .padding(padding)
-            .background(.ultraThinMaterial,
-                        in: RoundedRectangle(cornerRadius: Theme.corner, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.corner, style: .continuous)
-                    .strokeBorder(.primary.opacity(0.06)))
-            .shadow(color: .black.opacity(0.07), radius: 8, y: 3)
+        if #available(macOS 26.0, *) {
+            // Real Liquid Glass on Tahoe — the system draws the material,
+            // refraction and rim highlight itself.
+            content
+                .padding(padding)
+                .glassEffect(.regular, in: shape)
+                .shadow(color: .black.opacity(0.10), radius: 12, y: 5)
+        } else {
+            content
+                .padding(padding)
+                .background(.ultraThinMaterial, in: shape)
+                .overlay(
+                    shape.strokeBorder(
+                        LinearGradient(colors: [.white.opacity(0.22), .white.opacity(0.03)],
+                                       startPoint: .top, endPoint: .bottom),
+                        lineWidth: 1))
+                .shadow(color: .black.opacity(0.08), radius: 9, y: 4)
+        }
     }
 }
 
@@ -219,7 +233,9 @@ struct StatTile: View {
 
 // MARK: - Buttons
 
-/// Prominent gradient action button (Smart Scan, Clean…).
+/// Prominent action button (Smart Scan, Clean…). On macOS 26 it's a real
+/// interactive Liquid Glass capsule tinted with the brand color; earlier
+/// systems get the gradient capsule.
 struct PrimaryGradientButton: View {
     let title: String
     let icon: String
@@ -227,32 +243,46 @@ struct PrimaryGradientButton: View {
     var fullWidth = true
     let action: () -> Void
 
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 7) {
-                if isBusy {
-                    ProgressView().controlSize(.small).tint(.white)
-                } else {
-                    Image(systemName: icon)
-                        .font(.system(size: 13, weight: .semibold))
-                }
-                Text(title)
-                    .font(.system(size: 13.5, weight: .semibold))
+    private var label: some View {
+        HStack(spacing: 7) {
+            if isBusy {
+                ProgressView().controlSize(.small).tint(.white)
+            } else {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .semibold))
             }
-            .frame(maxWidth: fullWidth ? .infinity : nil)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 11)
-            .background(
-                Theme.brandGradient,
-                in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(.white.opacity(0.18)))
-            .foregroundStyle(.white)
-            .shadow(color: .blue.opacity(0.3), radius: 8, y: 4)
+            Text(title)
+                .font(.system(size: 13.5, weight: .semibold))
         }
-        .buttonStyle(PressableButtonStyle())
-        .disabled(isBusy)
+        .frame(maxWidth: fullWidth ? .infinity : nil)
+        .padding(.horizontal, 22)
+        .padding(.vertical, 11)
+        .foregroundStyle(.white)
+    }
+
+    var body: some View {
+        if #available(macOS 26.0, *) {
+            Button(action: action) {
+                label.glassEffect(
+                    .regular.tint(Color(red: 0.42, green: 0.32, blue: 0.95)).interactive(),
+                    in: Capsule())
+            }
+            .buttonStyle(PressableButtonStyle())
+            .shadow(color: .purple.opacity(0.35), radius: 9, y: 4)
+            .disabled(isBusy)
+        } else {
+            Button(action: action) {
+                label
+                    .background(Theme.brandGradient, in: Capsule())
+                    .overlay(
+                        Capsule().strokeBorder(
+                            LinearGradient(colors: [.white.opacity(0.35), .white.opacity(0.05)],
+                                           startPoint: .top, endPoint: .bottom)))
+            }
+            .buttonStyle(PressableButtonStyle())
+            .shadow(color: .blue.opacity(0.3), radius: 8, y: 4)
+            .disabled(isBusy)
+        }
     }
 }
 

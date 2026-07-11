@@ -21,8 +21,21 @@ final class NotificationManager {
     /// Don't nag: at most one alert per topic per 6 hours.
     private var lastSent: [String: Date] = [:]
 
+    /// Current authorization, kept fresh for the onboarding/settings UI.
+    private(set) var authStatus: UNAuthorizationStatus = .notDetermined
+
+    func refreshAuthStatus() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            Task { @MainActor [weak self] in
+                self?.authStatus = settings.authorizationStatus
+            }
+        }
+    }
+
     func requestPermissionIfNeeded() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge]) { _, _ in }
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge]) { _, _ in
+            Task { @MainActor [weak self] in self?.refreshAuthStatus() }
+        }
     }
 
     func checkThresholds(snapshot: SystemSnapshot, cacheSize: Int64) {

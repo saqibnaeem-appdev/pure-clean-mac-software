@@ -38,7 +38,7 @@ struct SmartScanView: View {
             }
             VStack(spacing: 8) {
                 Text("Smart Scan")
-                    .font(.system(size: 26, weight: .bold))
+                    .font(Theme.display(27, .bold))
                 Text("Inspects caches, logs, temporary files, app leftovers,\nbroken links and more. Personal files are never touched.")
                     .font(Theme.body())
                     .foregroundStyle(.secondary)
@@ -68,7 +68,7 @@ struct SmartScanView: View {
             ScannerRing(fraction: progress.fraction, idle: false) {
                 VStack(spacing: 2) {
                     Text("\(Int((progress.fraction * 100).rounded()))%")
-                        .font(.system(size: 40, weight: .bold, design: .rounded))
+                        .font(Theme.display(42, .extrabold))
                         .animatedNumber(Int(progress.fraction * 100))
                     Text("\(progress.filesScanned.formatted()) files")
                         .font(.system(size: 12, weight: .medium))
@@ -229,7 +229,7 @@ struct SmartScanView: View {
             SuccessSeal()
             VStack(spacing: 6) {
                 Text("Recovered \((engine.lastResult?.freedBytes ?? 0).bytesFormatted)")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(Theme.display(27, .bold))
                 Text("\(engine.lastResult?.removedItems ?? 0) items cleaned\((engine.lastResult?.failedItems ?? 0) > 0 ? " · \(engine.lastResult!.failedItems) skipped" : "") — restorable from the Trash.")
                     .font(Theme.body())
                     .foregroundStyle(.secondary)
@@ -264,47 +264,52 @@ private struct CategoryResultRow: View {
             HStack(spacing: 11) {
                 CheckCircle(isOn: $category.isSelected)
                     .disabled(disabled || category.items.isEmpty)
-                IconBadge(systemName: category.icon,
-                          tint: category.safety == .safe ? .blue : .orange, size: 28)
-                VStack(alignment: .leading, spacing: 1) {
-                    HStack(spacing: 6) {
-                        Text(category.name)
-                            .font(.system(size: 12.5, weight: .semibold))
-                        if category.safety == .review {
-                            Badge(text: "Review", color: .orange)
+
+                // Everything right of the checkbox toggles the item preview,
+                // so the expand tap can never swallow checkbox clicks.
+                HStack(spacing: 11) {
+                    IconBadge(systemName: category.icon,
+                              tint: category.safety == .safe ? .blue : .orange, size: 28)
+                    VStack(alignment: .leading, spacing: 1) {
+                        HStack(spacing: 6) {
+                            Text(category.name)
+                                .font(.system(size: 12.5, weight: .semibold))
+                            if category.safety == .review {
+                                Badge(text: "Review", color: .orange)
+                            }
+                        }
+                        Text(category.detail)
+                            .font(Theme.footnote())
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 1) {
+                        Text(category.size.bytesFormatted)
+                            .font(.system(size: 12.5, weight: .bold, design: .rounded))
+                            .foregroundStyle(category.size > 0 ? .primary : .tertiary)
+                            .animatedNumber(category.size)
+                        if category.fileCount > 0 {
+                            Text("\(category.fileCount.formatted()) files")
+                                .font(.system(size: 9.5))
+                                .foregroundStyle(.tertiary)
                         }
                     }
-                    Text(category.detail)
-                        .font(Theme.footnote())
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.tertiary)
+                        .rotationEffect(.degrees(expanded ? 180 : 0))
+                        .opacity(category.items.isEmpty ? 0 : 1)
                 }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 1) {
-                    Text(category.size.bytesFormatted)
-                        .font(.system(size: 12.5, weight: .bold, design: .rounded))
-                        .foregroundStyle(category.size > 0 ? .primary : .tertiary)
-                        .animatedNumber(category.size)
-                    if category.fileCount > 0 {
-                        Text("\(category.fileCount.formatted()) files")
-                            .font(.system(size: 9.5))
-                            .foregroundStyle(.tertiary)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    guard !category.items.isEmpty else { return }
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+                        expanded.toggle()
                     }
                 }
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(.tertiary)
-                    .rotationEffect(.degrees(expanded ? 180 : 0))
-                    .opacity(category.items.isEmpty ? 0 : 1)
             }
             .padding(11)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                guard !category.items.isEmpty else { return }
-                withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
-                    expanded.toggle()
-                }
-            }
 
             if expanded {
                 VStack(spacing: 4) {
@@ -368,8 +373,13 @@ private struct CheckCircle: View {
                 }
             }
             .frame(width: 18, height: 18)
+            // A generous solid hit area — an unchecked circle is transparent
+            // and would otherwise only respond on its 1.5 pt ring.
+            .padding(6)
+            .contentShape(Circle())
         }
         .buttonStyle(.plain)
+        .padding(-6)
     }
 }
 

@@ -149,7 +149,7 @@ struct DashboardView: View {
                 MetricRing(fraction: fraction, tint: tint, size: 104) {
                     VStack(spacing: 0) {
                         Text(value)
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .font(Theme.display(15, .bold))
                             .lineLimit(1)
                             .minimumScaleFactor(0.6)
                             .animatedNumber(value)

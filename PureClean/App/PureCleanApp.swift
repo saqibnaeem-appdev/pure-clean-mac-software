@@ -5,6 +5,10 @@ struct PureCleanApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var app = AppState.shared
 
+    init() {
+        Theme.registerFonts()
+    }
+
     var body: some Scene {
         Window("PureClean", id: "main") {
             MainWindowView()

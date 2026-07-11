@@ -59,8 +59,8 @@ struct TrashView: View {
             IconBadge(systemName: "lock.shield.fill", tint: .orange, size: 52)
             VStack(spacing: 4) {
                 Text("Full Disk Access needed")
-                    .font(.system(size: 16, weight: .bold))
-                Text("macOS protects the Trash, so PureClean can't measure it yet.\nGrant Full Disk Access in System Settings, then check again.")
+                    .font(Theme.display(17, .bold))
+                Text("macOS protects the Trash, so PureClean can't measure it yet.\nEnable PureClean in System Settings, then restart the app — macOS only applies the permission to a fresh launch.")
                     .font(Theme.body())
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -70,10 +70,9 @@ struct TrashView: View {
                     app.permissions.openFullDiskAccessSettings()
                 }
                 .controlSize(.large)
-                PrimaryGradientButton(title: "Check Again", icon: "arrow.clockwise",
+                PrimaryGradientButton(title: "Restart PureClean", icon: "arrow.triangle.2.circlepath",
                                       fullWidth: false) {
-                    trash.refresh()
-                    app.permissions.refresh()
+                    app.permissions.relaunchApp()
                 }
             }
         }
